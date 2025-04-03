@@ -1,0 +1,9 @@
+venv/
+.vscode/
+__pycache__/
+*.pyc
+*.log
+node_modules/  
+.env 
+MNIST-full/
+.DS_Store
