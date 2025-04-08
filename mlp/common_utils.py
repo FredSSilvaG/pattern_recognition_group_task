@@ -1,3 +1,4 @@
+#author: mmj
 import math
 import time
 
