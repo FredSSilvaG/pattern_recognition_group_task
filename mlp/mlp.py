@@ -85,7 +85,7 @@ def report_result(file_path, best_accuracy, best_params, test_accuracy, final_lo
 
 # Main function
 if __name__ == "__main__":
-    parent_path = './resource'  # Dataset root directory
+    parent_path = './MNIST-full'  # Dataset root directory
     train_tsv_path = os.path.join(parent_path, 'gt-train.tsv')
     X, y = get_dataset(parent_path, file_path=train_tsv_path, num_samples=None)
 
