@@ -7,3 +7,4 @@ node_modules/
 .env 
 MNIST-full/
 .DS_Store
+.idea
