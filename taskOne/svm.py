@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import hinge_loss, accuracy_score, classification_report
 from utils import file_utils
 
-from taskOne.utils import report_utils
+from utils import report_utils
 import importlib
 importlib.reload(file_utils)
 
