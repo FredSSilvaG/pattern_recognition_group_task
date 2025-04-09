@@ -1,7 +1,7 @@
 #Author: mmj
 #DATE: 09.04.2025
 from sklearn.neural_network import MLPClassifier
-from taskOne.utils.file_utils import get_dataset
+from utils.file_utils import get_dataset
 from sklearn.model_selection import train_test_split
 import time
 import pandas as pd
@@ -70,7 +70,7 @@ def hyperparameter_tuning(X_train, y_train, X_val, y_val):
 
 # Main function
 if __name__ == "__main__":
-    parent_path = 'resource/MNIST-full'  # Dataset root directory
+    parent_path = 'MNIST-full'  # Dataset root directory
     train_tsv_path = os.path.join(parent_path, 'gt-train.tsv')
     X, y = get_dataset(parent_path, file_path=train_tsv_path, num_samples=None)
 
@@ -100,9 +100,9 @@ if __name__ == "__main__":
     print(f'Final Loss: {final_loss:.4f}, Test Accuracy: {test_accuracy:.4f}')
 
     # Generate report.md
-    with open('../output/mlp_report.md', 'w') as f:
+    with open('./output/report.md', 'a') as f:
         # Write experiment results table
-        f.write("## Experiment Results\n")
+        f.write("## MLP on MNIST\n")
         f.write(results_df.to_markdown(index=False) + "\n\n")
 
         # Write best parameters and performance

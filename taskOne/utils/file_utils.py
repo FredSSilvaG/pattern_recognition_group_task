@@ -42,7 +42,7 @@ def get_dataset(parent_path, file_path, num_samples=None):
     return X, y
 
 def load_mnist_data():
-    parent_path = '/MNIST-full'  # Dataset root directory
+    parent_path = 'MNIST-full'  # Dataset root directory
     train_tsv_path = os.path.join(parent_path, 'gt-train.tsv')
     X_train, y_train = get_dataset(parent_path, file_path=train_tsv_path, num_samples=None)
     test_tsv_path = os.path.join(parent_path, 'gt-test.tsv')
