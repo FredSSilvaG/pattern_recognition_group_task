@@ -1,4 +1,5 @@
-#author: mmj
+#Author: mmj
+#DATE: 09.04.2025
 import os
 import pandas as pd
 from PIL import Image
@@ -39,3 +40,11 @@ def get_dataset(parent_path, file_path, num_samples=None):
     X, y = create_dataset(file_path, parent_path, num_samples)
     X = X.reshape(X.shape[0], -1)
     return X, y
+
+def load_mnist_data():
+    parent_path = '/MNIST-full'  # Dataset root directory
+    train_tsv_path = os.path.join(parent_path, 'gt-train.tsv')
+    X_train, y_train = get_dataset(parent_path, file_path=train_tsv_path, num_samples=None)
+    test_tsv_path = os.path.join(parent_path, 'gt-test.tsv')
+    X_test, y_test = get_dataset(parent_path, file_path=test_tsv_path, num_samples=None)
+    return X_train, y_train, X_test, y_test

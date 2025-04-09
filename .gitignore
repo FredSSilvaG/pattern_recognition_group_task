@@ -5,6 +5,6 @@ __pycache__/
 *.log
 node_modules/  
 .env 
-MNIST-full/
+taskOne/resource/MNIST-full/
 .DS_Store
 .idea
