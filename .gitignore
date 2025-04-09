@@ -4,7 +4,7 @@ __pycache__/
 *.pyc
 *.log
 node_modules/  
-.env 
+.env
 MNIST-full/
 .DS_Store
 .idea

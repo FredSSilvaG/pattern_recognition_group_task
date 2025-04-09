@@ -1,12 +1,11 @@
 from sklearn.svm import SVC
 import numpy as np
-import pandas as pd
 from sklearn.model_selection import GridSearchCV,cross_val_score, KFold
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import hinge_loss, accuracy_score, classification_report
-
-import utils
+from taskOne.utils import file_utils
+from taskOne.utils import utils
 import importlib
 importlib.reload(utils)
 
@@ -14,7 +13,7 @@ importlib.reload(utils)
 def svm() -> None:
     args = utils.parse_args()
 
-    X_train, y_train, X_test, y_test = utils.load_mnist_data()
+    X_train, y_train, X_test, y_test = file_utils.load_mnist_data()
     print("load success:", X_train.shape)
 
     scaler = StandardScaler()

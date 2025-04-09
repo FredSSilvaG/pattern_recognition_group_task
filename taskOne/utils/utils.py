@@ -21,8 +21,8 @@ def load_images_from_df(df, target_size=(28, 28)):
     return np.array(images), np.array(labels)
 
 def load_mnist_data():
-    train_df = pd.read_csv('MNIST-full/gt-train.tsv', sep='\t', header=None, names=['path', 'class'])
-    test_df = pd.read_csv('MNIST-full/gt-test.tsv', sep='\t', header=None, names=['path', 'class'])
+    train_df = pd.read_csv('../resource/MNIST-full/gt-train.tsv', sep='\t', header=None, names=['path', 'class'])
+    test_df = pd.read_csv('../resource/MNIST-full/gt-test.tsv', sep='\t', header=None, names=['path', 'class'])
     X_train, y_train = load_images_from_df(train_df)
     X_test, y_test = load_images_from_df(test_df)
     X_train = X_train.reshape(X_train.shape[0], -1)
