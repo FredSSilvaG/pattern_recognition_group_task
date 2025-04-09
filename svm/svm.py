@@ -25,7 +25,7 @@ def svm() -> None:
     X_test = pca.transform(X_test)
 
     param_grid = {
-    'C': [0.1,1],  
+    'C': [10],  
     'kernel': ['linear','rbf'], 
     'gamma': ['scale']  
     }
@@ -34,37 +34,38 @@ def svm() -> None:
 
     report_results = []
     row_names = []
-    for kernel in param_grid['kernel']:
-        for C in param_grid['C']:
-            report_results_K=[]
+    svm = SVC(cache_size=10000)
+    # for kernel in param_grid['kernel']:
+    #     for C in param_grid['C']:
+    #         report_results_K=[]
 
-            row_names.append(kernel)
-            report_results_K.append(float(C))
+    #         row_names.append(kernel)
+    #         report_results_K.append(float(C))
 
-            svm = SVC(cache_size=10000,kernel=kernel,C=C,gamma='scale')
-            # Compute cross-validated accuracy
-            accuracy_scores = cross_val_score(svm, X_train, y_train, cv=kf, scoring='accuracy')
-            mean_accuracy = np.mean(accuracy_scores)
-            std_accuracy = np.std(accuracy_scores)
+    #         svm = SVC(cache_size=10000,kernel=kernel,C=C,gamma='scale')
+    #         # Compute cross-validated accuracy
+    #         accuracy_scores = cross_val_score(svm, X_train, y_train, cv=kf, scoring='accuracy')
+    #         mean_accuracy = np.mean(accuracy_scores)
+    #         std_accuracy = np.std(accuracy_scores)
 
-            report_results_K.append(float(mean_accuracy))
-            report_results_K.append(float(std_accuracy))
+    #         report_results_K.append(float(mean_accuracy))
+    #         report_results_K.append(float(std_accuracy))
 
-            # Compute cross-validated hinge loss
-            hinge_losses = []
-            for train_idx, val_idx in kf.split(X_train):
-                 X_train_split, X_val = X_train[train_idx], X_train[val_idx]
-                 y_train_split, y_val = y_train[train_idx], y_train[val_idx]
-                 svm.fit(X_train_split, y_train_split)
-                 y_pred = svm.decision_function(X_val)
-                 hinge_losses.append(hinge_loss(y_val, y_pred))
+    #         # Compute cross-validated hinge loss
+    #         hinge_losses = []
+    #         for train_idx, val_idx in kf.split(X_train):
+    #              X_train_split, X_val = X_train[train_idx], X_train[val_idx]
+    #              y_train_split, y_val = y_train[train_idx], y_train[val_idx]
+    #              svm.fit(X_train_split, y_train_split)
+    #              y_pred = svm.decision_function(X_val)
+    #              hinge_losses.append(hinge_loss(y_val, y_pred))
 
-            mean_loss = np.mean(hinge_losses)  
-            std_loss = np.std(hinge_losses)
-            report_results_K.append(float(mean_loss))
-            report_results_K.append(float(std_loss))
-            report_results.append(report_results_K)
-            print(f"kernel={kernel}: C={C}, Accuracy = {mean_accuracy:.4f} (±{std_accuracy:.4f}), Hinge Loss = {mean_loss:.4f} (±{std_loss:.4f})")
+    #         mean_loss = np.mean(hinge_losses)  
+    #         std_loss = np.std(hinge_losses)
+    #         report_results_K.append(float(mean_loss))
+    #         report_results_K.append(float(std_loss))
+    #         report_results.append(report_results_K)
+    #         print(f"kernel={kernel}: C={C}, Accuracy = {mean_accuracy:.4f} (±{std_accuracy:.4f}), Hinge Loss = {mean_loss:.4f} (±{std_loss:.4f})")
 
 
     col_names = ["C","Mean Accuracy","Std Accuracy","Mean Hinge Loss","Std Hinge Loss"]

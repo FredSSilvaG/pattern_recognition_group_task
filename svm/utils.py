@@ -38,7 +38,7 @@ def parse_args() -> argparse.Namespace:
         "--out-dir",
         dest="out_dir",
         type=Path,
-        default="output",
+        default="svm/output",
         help="Path to the direcotry where all outputs are saved [Default: ./output/]",
     )
     return parser.parse_args()
