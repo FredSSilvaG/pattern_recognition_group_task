@@ -19,13 +19,14 @@ def svm() -> None:
 
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
+    X_test = scaler.fit_transform(X_test)
 
-    pca = PCA(n_components=50)
-    X_train = pca.fit_transform(X_train)
-    X_test = pca.transform(X_test)
+    # pca = PCA(n_components=50)
+    # X_train = pca.fit_transform(X_train)
+    # X_test = pca.transform(X_test)
 
     param_grid = {
-    'C': [0.001,0.01,0.1,1,10],  
+    'C': [0.1,1,10],  
     'kernel': ['linear','rbf'], 
     'gamma': ['scale']  
     }
@@ -34,6 +35,7 @@ def svm() -> None:
 
     report_results = []
     row_names = []
+    svm = SVC()
     for kernel in param_grid['kernel']:
         for C in  param_grid['C']:
             report_results_K=[]

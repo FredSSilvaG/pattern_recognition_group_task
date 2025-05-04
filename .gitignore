@@ -8,3 +8,5 @@ node_modules/
 MNIST-full/
 .DS_Store
 .idea
+KWS/
+word_images/
