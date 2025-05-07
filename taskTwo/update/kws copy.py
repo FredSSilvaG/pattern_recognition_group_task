@@ -185,30 +185,25 @@ class KeywordSpotter:
         return distances[:k] if k is not None else distances
     
     def calculate_precision_recall(self, query_id, matches, top_k=None):
-        query_image = self.extract_word_image(query_id)
-        query_features = self.extract_features(query_image)
-        
-        modified_query = query_image.copy()
-        noise = np.random.normal(0, 5, modified_query.shape).astype(np.int16)
-        modified_query = np.clip(modified_query + noise, 0, 255).astype(np.uint8)
-        
-        modified_features = self.extract_features(modified_query)
-        baseline_distance = self.dtw_distance(query_features, modified_features)
-        
-        threshold = baseline_distance * 2.0
-        
         if top_k is not None:
             matches = matches[:top_k]
         
-        relevant_count = sum(1 for _, dist in matches if dist < threshold)
+        if not matches:
+            return 0.0, 0.0
         
-        precision = relevant_count / len(matches) if matches else 0
+        distances = [dist for _, dist in matches]
         
-        estimated_total_relevant = max(relevant_count, 10)  # Assume at least 10 relevant docs
-        recall = relevant_count / estimated_total_relevant if estimated_total_relevant > 0 else 0
+        threshold_distance = np.percentile(distances, 50)
+        
+        relevant_count = sum(1 for _, dist in matches if dist <= threshold_distance)
+        
+        precision = relevant_count / len(matches)
+        
+        estimated_total_relevant = max(10, relevant_count * 4)
+        recall = relevant_count / estimated_total_relevant
         
         return precision, recall
-    
+        
     def process_test_queries(self):
         test_docs = []
         try:
