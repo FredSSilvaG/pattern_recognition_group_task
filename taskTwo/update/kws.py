@@ -15,6 +15,15 @@ class KeywordSpotter:
         self.keywords = self._load_keywords()
         self.train_docs = self._load_doc_list('train.tsv')
         self.val_docs = self._load_doc_list('validation.tsv')
+        self.report_file = "report.md"
+
+        # Initialize report file with header
+        with open(self.report_file, 'a') as f:
+            f.write("# Keyword Spotting Evaluation Report\n\n")
+            f.write("## Dataset Overview\n")
+            f.write(f"- Training documents: {len(self.train_docs)}\n")
+            f.write(f"- Validation documents: {len(self.val_docs)}\n")
+            f.write(f"- Total keywords: {len(self.keywords)}\n\n")
 
     def _load_transcriptions(self):
         df = pd.read_csv(os.path.join(self.data_dir, 'transcription.tsv'), 
@@ -175,7 +184,9 @@ class KeywordSpotter:
         
         mean_ap = np.mean(all_aps) if all_aps else 0
 
-        
+        with open(self.report_file, 'a') as f:
+            f.write(f"\n**Mean Average Precision (mAP): {mean_ap:.4f}**\n\n")
+
         return mean_ap
     
     def _get_clean_word(self, transcription):
@@ -183,13 +194,23 @@ class KeywordSpotter:
         word = transcription.replace('s_mi', '-').replace('s_sq', ';').replace('s_qo', ':').replace('s_qt', "'")
         for i in range(10):
             word = word.replace(f's_{i}', str(i))
-        word = word.replace('-', '')
+        # word = word.replace('-', '')
         return word.lower()
     
     def create_test_output(self):
         val_docs = self._load_doc_list('validation.tsv')
         print(f"Creating test output for {len(self.keywords)} keywords across {len(val_docs)} documents...")
-        
+
+        with open(self.report_file, 'a') as f:
+            f.write("## Test Set Results\n\n")
+            f.write(f"Creating test output for {len(self.keywords)} keywords across {len(val_docs)} documents...\n\n")
+
+        with open(self.report_file, 'a') as f:
+            f.write("## Complete Test Results\n\n")
+            f.write("### Validation Set Performance\n")
+            f.write("| Keyword | Query ID | Top Match ID | Top Match Word | Distance |\n")
+            f.write("|---------|----------|--------------|----------------|----------|\n")
+
         # Process each keyword
         for keyword in tqdm(self.keywords, desc="Processing keywords"):
             query_id = None
@@ -206,11 +227,17 @@ class KeywordSpotter:
                 continue
                 
             matches = self.find_matches(query_id, val_docs)
-            
+
+            top_match_id, top_dist = matches[0]
+            top_match_word = self._get_clean_word(self.transcriptions.get(top_match_id, ""))
+
+            with open(self.report_file, 'a') as f:
+                f.write(f"| {keyword} | {query_id} | {top_match_id} | {top_match_word} | {top_dist:.4f} |\n")
+
             output_line = keyword
             for word_id, distance in matches:
                 output_line += f"\t{word_id}\t{distance:.6f}"
-            
+
             print(output_line)
 def main():
     kws = KeywordSpotter(data_dir='.')
