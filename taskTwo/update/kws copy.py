@@ -185,6 +185,10 @@ class KeywordSpotter:
         return distances[:k] if k is not None else distances
     
     def calculate_precision_recall(self, query_id, matches, top_k=None):
+        """
+        Calculate precision and recall using a percentile-based approach
+        instead of an absolute threshold
+        """
         if top_k is not None:
             matches = matches[:top_k]
         
@@ -193,17 +197,17 @@ class KeywordSpotter:
         
         distances = [dist for _, dist in matches]
         
-        threshold_distance = np.percentile(distances, 50)
+        threshold_distance = np.percentile(distances, 30)
         
         relevant_count = sum(1 for _, dist in matches if dist <= threshold_distance)
         
         precision = relevant_count / len(matches)
         
-        estimated_total_relevant = max(10, relevant_count * 4)
+        estimated_total_relevant = max(10, relevant_count * 4)  # Estimate total relevant as 4x what we found
         recall = relevant_count / estimated_total_relevant
         
         return precision, recall
-        
+    
     def process_test_queries(self):
         test_docs = []
         try:
@@ -239,7 +243,6 @@ class KeywordSpotter:
                     
                     matches = self.find_matches(query_id, test_docs, k=20)
                     
-                    # Calculate precision and recall
                     precision, recall = self.calculate_precision_recall(query_id, matches, top_k=10)
                     avg_precision += precision
                     avg_recall += recall
@@ -247,7 +250,6 @@ class KeywordSpotter:
                     
                     print(f"  Precision@10: {precision:.4f}, Recall@10: {recall:.4f}")
                     
-                    # Write result line
                     result_line = query_id
                     for word_id, distance in matches:
                         result_line += f"\t{word_id}\t{distance:.6f}"
@@ -259,7 +261,6 @@ class KeywordSpotter:
                     for i, (word_id, distance) in enumerate(matches[:5]):
                         print(f"    {i+1}. {word_id}: {distance:.4f}")
         
-        # Calculate averages
         if query_count > 0:
             avg_precision /= query_count
             avg_recall /= query_count
@@ -267,6 +268,41 @@ class KeywordSpotter:
             print(f"Average Recall: {avg_recall:.4f}")
             
         print(f"\nResults written to results.tsv")
+
+    def generate_keyword_results(self, output_file='test1.tsv'):
+        test_docs = []
+        try:
+            with open(os.path.join(self.data_dir, 'test1.tsv'), 'r') as f:
+                for line in f:
+                    doc_id = line.strip()
+                    if doc_id and not doc_id.startswith('//'):
+                        test_docs.append(doc_id)
+        except Exception as e:
+            print(f"Error reading test.tsv: {e}")
+            test_docs = self.val_docs[:2]
+        
+        print(f"Using {len(test_docs)} documents from test1.tsv")
+        
+        sample_queries = []
+        for doc_id in test_docs:
+            doc_words = self.get_all_word_ids(doc_id)
+            if doc_words:
+                sample_queries.append(doc_words[0])
+        
+        if not sample_queries:
+            print("No sample queries found")
+            return
+        
+        with open(output_file, 'w') as f:
+            for i, keyword in enumerate(self.keywords):
+                query_id = sample_queries[i % len(sample_queries)]
+                
+                matches = self.find_matches(query_id, test_docs)
+                
+                line = keyword
+                for word_id, distance in matches:
+                    line += f"\t{word_id}\t{distance:.6f}"
+                f.write(line + "\n")
 
 def main():
     kws = KeywordSpotter(data_dir='.')
@@ -284,6 +320,9 @@ def main():
     
     print("\n=== Sample Query Testing ===")
     kws.process_test_queries()
+
+    print("\n=== Generating Keyword Results ===")
+    kws.generate_keyword_results('test1.tsv')
     
 
 if __name__ == "__main__":
