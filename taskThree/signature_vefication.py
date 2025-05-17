@@ -80,44 +80,35 @@ def generate_test_predictions(results_df):
     return output_lines
 
 def main():
-    # Update path to the test folder
     base_dir = './SignatureVerification-test'
     enrollment_dir = os.path.join(base_dir, 'enrollment')
     verification_dir = os.path.join(base_dir, 'verification')
     
-    # Load writers from the test folder
     writers_df = pd.read_csv(os.path.join(base_dir, 'writers.tsv'), sep='\t', header=None, 
                            names=['writer_id'])
     
     print(f"Found {len(writers_df)} writers (starting from ID {min(writers_df['writer_id'])}).")
     
-    # If there's no ground truth file in test, we'll just calculate distances without verification
     results = []
     print("Processing verification signatures...")
     
-    # Get all verification files
     verification_files = os.listdir(verification_dir) if os.path.exists(verification_dir) else []
     
     if not verification_files:
-        print("No verification files found. Will try to read test.tsv instead.")
-        # If there are no verification files, try to read from test.tsv to get what we need to predict
         try:
             test_df = pd.read_csv(os.path.join(base_dir, 'test.tsv'), sep='\t', header=None)
-            # Extract signature IDs that need verification from test.tsv
             verification_files = []
             for _, row in test_df.iterrows():
                 writer_id = row[0]
-                for i in range(1, len(row), 2):  # Skip distance columns
+                for i in range(1, len(row), 2):
                     if i < len(row):
                         verification_files.append(f"{row[i]}.tsv")
         except:
             print("Error reading test.tsv. No verification files will be processed.")
 
-    # Process each writer
-    for writer_id in tqdm(range(31,34)):
+    for writer_id in tqdm(writers_df['writer_id']):
         writer_id = int(writer_id)
         
-        # Load reference signatures
         reference_files = [f"{writer_id:03d}-g-{i:02d}.tsv" for i in range(1, 6)]
         reference_paths = [os.path.join(enrollment_dir, f) for f in reference_files]
         reference_sigs = [load_signature(path) for path in reference_paths if os.path.exists(path)]
@@ -126,7 +117,6 @@ def main():
             print(f"Warning: No reference signatures found for writer {writer_id}.")
             continue
         
-        # Process verification signatures for this writer
         writer_verification_files = [f for f in verification_files if f.startswith(f"{writer_id:03d}-")]
         
         for sig_file in writer_verification_files:
@@ -134,7 +124,7 @@ def main():
             if not os.path.exists(sig_path):
                 continue
                 
-            signature_id = sig_file.split('.')[0]  # Remove .tsv extension
+            signature_id = sig_file.split('.')[0]
             test_sig = load_signature(sig_path)
             distance = verify_signature(test_sig, reference_sigs)
             
@@ -142,18 +132,14 @@ def main():
                 'writer_id': writer_id,
                 'signature_id': signature_id,
                 'distance': distance,
-                # No ground truth available, just set to None/False
                 'is_genuine': None,
                 'verified_as_genuine': False
             })
     
     results_df = pd.DataFrame(results)
-    
-    # Generate predictions 
     predictions = generate_test_predictions(results_df)
     
     print(f"\nProcessed {len(results)} signatures")
-    print("Results saved to results/test.tsv")
     
     return results_df
 
