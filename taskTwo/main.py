@@ -39,7 +39,9 @@ def build_template_library(train_ids, images_dir, locations_dir, transcriptions,
                     continue
                 text = transcriptions[word_id]
                 if text in keywords:
-                    word_img = image_utils.crop_word_image(image, polygon)
+                    #word_img = image_utils.crop_word_image(image, polygon)
+                    word_imd_path = os.path.join(f"cutouts_png/{doc_id}", f"{doc_id}-{word_id}.png")
+                    word_img = cv2.imread(word_imd_path, cv2.IMREAD_GRAYSCALE)
                     features = dtw.extract_hog_sequence(word_img)
                     if word_img is None or word_img.size == 0:
                         print(f"[WARN] Empty image: {word_id}")
@@ -67,7 +69,9 @@ def run_dtw_matching(validation_ids, images_dir, locations_dir, transcriptions, 
                 true_text = transcriptions[word_id]
                 # if true_text not in keywords:
                 #     continue
-                word_img = image_utils.crop_word_image(image, polygon)
+                #word_img = image_utils.crop_word_image(image, polygon)
+                word_imd_path = os.path.join(f"cutouts_png/{doc_id}", f"{doc_id}-{word_id}.png")
+                word_img = cv2.imread(word_imd_path, cv2.IMREAD_GRAYSCALE)
                 test_feat = dtw.extract_hog_sequence(word_img)
 
                 best_keyword = None
@@ -106,12 +110,12 @@ def main() -> None:
     templates = build_template_library(train_images, args.images, args.locations,transcriptions, keywords)
 
     # validate the validation_images, run so slow   
-    results = run_dtw_matching(validation_images, args.images, args.locations, transcriptions, keywords, templates, 140)
-    # for word_id, true, pred, score in results:
-    #     if (true == pred):
-    #         print(f"True Positive: true={true}, pred={pred}, score={score}")
-    #     else:
-    #         print(f"False Positive: true={true}, pred={pred}, score={score}")    
+    results = run_dtw_matching(['300'], args.images, args.locations, transcriptions, keywords, templates, 160)
+    for word_id, true, pred, score in results:
+        if (true == pred):
+            print(f"True Positive: true={true}, pred={pred}, score={score}")
+        else:
+            print(f"False Positive: true={true}, pred={pred}, score={score}")    
         
 
     score_utils.precision_recall(results, keywords)

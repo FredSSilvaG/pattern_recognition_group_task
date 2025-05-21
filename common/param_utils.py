@@ -63,6 +63,15 @@ def parse_args_KWS() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--kwsTest",
+        type=Path,
+        default="KWS-test/",
+        help=(
+            "Path to the test images fold  from the George Washington Database "
+            "[Default: ./KWS-test]"
+        ),
+    )
+    parser.add_argument(
         "-o",
         "--out-dir",
         dest="out_dir",

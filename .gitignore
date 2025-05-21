@@ -10,3 +10,8 @@ MNIST-full/
 .idea
 KWS/
 word_images/
+cutouts_png/
+KWS-test/
+results.tsv
+test.tsv
+test1.tsv

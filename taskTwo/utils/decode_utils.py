@@ -1,10 +1,10 @@
 
 SPECIAL_MAP = {
-    "s_pt": ".", 
-    "s_cm": ",", 
-    "s_mi": "-", 
-    "s_sq": ";", 
-    "s_qo": ":", 
+    "s_pt": ".",
+    "s_cm": ",",
+    "s_mi": "-",
+    "s_sq": ";",
+    "s_qo": ":",
     "s_qt": "'",
     "s_s": "ſ",
     **{f"s_{i}": str(i) for i in range(10)}

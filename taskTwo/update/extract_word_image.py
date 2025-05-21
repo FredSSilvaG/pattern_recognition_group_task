@@ -1,3 +1,4 @@
+
 from svgpathtools import svg2paths2, paths2svg
 import numpy as np
 from PIL import Image, ImageDraw
@@ -6,6 +7,11 @@ import cv2
 import glob #get files with pattern matching
 import os
 import matplotlib.pyplot as plt
+
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from common import param_utils
+
 
 # Cut out single words from scan file and save them as individual files
 
@@ -16,15 +22,15 @@ import matplotlib.pyplot as plt
 # (optional/todo) 5. further preprocessing: normalization, tilting, ...
 # 6. export as new file
 
-import os
 
 # Change these directory paths to match the expected structure
 output_base = "./cutouts_png" 
 os.makedirs(output_base, exist_ok=True)
 
 # get the correct files
-pages = glob.glob("./images/*.jpg")
-cutouts = glob.glob("./locations/*.svg")
+args = param_utils.parse_args_KWS()
+pages = glob.glob(os.path.join(args.kwsTest, "images/*.jpg"))
+cutouts = glob.glob(os.path.join(args.kwsTest, "locations/*.svg"))
 pages.sort()
 cutouts.sort()
 for page, cutout in zip(pages, cutouts):

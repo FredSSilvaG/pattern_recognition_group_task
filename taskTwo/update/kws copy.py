@@ -7,6 +7,11 @@ from tqdm import tqdm
 import glob
 import matplotlib.pyplot as plt
 
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from common import param_utils
+
+
 class KeywordSpotter:
     def __init__(self, data_dir='.'):
         self.data_dir = data_dir
@@ -15,18 +20,39 @@ class KeywordSpotter:
         
         self.keywords = self._load_keywords()
         self.val_docs = self._get_document_ids()
+        self.test_queries = self._load_test_queries()
+        self.keywords_with_query_id = self._load_keywords_with_query_id()
         
     def _load_keywords(self):
         try:
             with open(os.path.join(self.data_dir, 'keywords.tsv'), 'r') as f:
-                return [line.strip() for line in f.readlines()]
+                lines = [line.strip() for line in f.readlines()]
+                return [line.split('\t')[0] for line in lines]
         except Exception as e:
             print(f"Error loading keywords: {e}")
             return []
+
+    def _load_test_queries(self):
+        try:
+            with open(os.path.join(self.data_dir, 'keywords.tsv'), 'r') as f:
+                lines = [line.strip() for line in f.readlines()]
+                return [line.split('\t')[1] for line in lines]
+        except Exception as e:
+            print(f"Error loading keywords: {e}")
+            return []    
+
+    def _load_keywords_with_query_id(self):
+        try:
+            with open(os.path.join(self.data_dir, 'keywords.tsv'), 'r') as f:
+                lines = [line.strip() for line in f.readlines()]
+                return lines
+        except Exception as e:
+            print(f"Error loading keywords: {e}")
+            return []    
     
     def _get_document_ids(self):
         doc_ids = []
-        cutouts_dir = os.path.join(self.data_dir, "cutouts_png")
+        cutouts_dir = os.path.join(".", "cutouts_png")
         
         if not os.path.exists(cutouts_dir):
             print(f"Warning: {cutouts_dir} not found")
@@ -40,7 +66,7 @@ class KeywordSpotter:
     
     def get_all_word_ids(self, doc_id=None):
         word_ids = []
-        cutouts_dir = os.path.join(self.data_dir, "cutouts_png")
+        cutouts_dir = os.path.join('.', "cutouts_png")
         
         docs_to_scan = [doc_id] if doc_id else self.val_docs
         
@@ -69,7 +95,7 @@ class KeywordSpotter:
         doc_id, line_id, word_id_in_line = word_id.split('-')
         path_id = f"{line_id}-{word_id_in_line}"
         
-        cutouts_png_dir = os.path.join(self.data_dir, "cutouts_png", doc_id)
+        cutouts_png_dir = os.path.join('.', "cutouts_png", doc_id)
         
         patterns = [
             f"{doc_id}-{doc_id}-{line_id}-{word_id_in_line}.png",
@@ -226,7 +252,7 @@ class KeywordSpotter:
         avg_recall = 0
         query_count = 0
         
-        with open('results.tsv', 'w') as results_file:
+        with open('KWS-test/results.tsv', 'w') as results_file:
             for doc_id in test_docs:
                 print(f"\nProcessing document: {doc_id}")
                 
@@ -235,7 +261,7 @@ class KeywordSpotter:
                     print(f"No words found in document {doc_id}, skipping")
                     continue
                 
-                test_queries = sample_words[:min(3, len(sample_words))]
+                test_queries = self.test_queries
                 print(f"Selected {len(test_queries)} queries from document {doc_id}")
                 
                 for query_id in test_queries:
@@ -269,19 +295,19 @@ class KeywordSpotter:
             
         print(f"\nResults written to results.tsv")
 
-    def generate_keyword_results(self, output_file='test1.tsv'):
+    def generate_keyword_results(self, output_file='test2.tsv'):
         test_docs = []
         try:
-            with open(os.path.join(self.data_dir, 'test1.tsv'), 'r') as f:
+            with open(os.path.join(self.data_dir, 'test.tsv'), 'r') as f:
                 for line in f:
                     doc_id = line.strip()
                     if doc_id and not doc_id.startswith('//'):
                         test_docs.append(doc_id)
         except Exception as e:
             print(f"Error reading test.tsv: {e}")
-            test_docs = self.val_docs[:2]
+            test_docs = self.val_docs[-5:]
         
-        print(f"Using {len(test_docs)} documents from test1.tsv")
+        print(f"Using {len(test_docs)} documents from test.tsv")
         
         sample_queries = []
         for doc_id in test_docs:
@@ -294,18 +320,19 @@ class KeywordSpotter:
             return
         
         with open(output_file, 'w') as f:
-            for i, keyword in enumerate(self.keywords):
-                query_id = sample_queries[i % len(sample_queries)]
+            for i, keyword in enumerate(self.keywords_with_query_id):
+                query_id = keyword.split('\t')[1] 
                 
                 matches = self.find_matches(query_id, test_docs)
                 
-                line = keyword
+                line = keyword.split('\t')[0] 
                 for word_id, distance in matches:
                     line += f"\t{word_id}\t{distance:.6f}"
                 f.write(line + "\n")
 
 def main():
-    kws = KeywordSpotter(data_dir='.')
+    args = param_utils.parse_args_KWS()
+    kws = KeywordSpotter(data_dir= args.kwsTest)
     
     print(f"Loaded {len(kws.keywords)} keywords")
     print(f"Found {len(kws.val_docs)} documents: {kws.val_docs}")
@@ -318,11 +345,11 @@ def main():
     
     print(f"Total words: {total_words}")
     
-    print("\n=== Sample Query Testing ===")
-    kws.process_test_queries()
+    # print("\n=== Sample Query Testing ===")
+    # kws.process_test_queries()
 
     print("\n=== Generating Keyword Results ===")
-    kws.generate_keyword_results('test1.tsv')
+    kws.generate_keyword_results('test2.tsv')
     
 
 if __name__ == "__main__":
