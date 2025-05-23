@@ -15,3 +15,5 @@ KWS-test/
 results.tsv
 test.tsv
 test1.tsv
+SignatureVerification-test/
+SignatureVerification/

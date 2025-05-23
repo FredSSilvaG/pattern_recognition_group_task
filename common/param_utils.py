@@ -80,3 +80,45 @@ def parse_args_KWS() -> argparse.Namespace:
         help="Path to the direcotry where all outputs are saved [Default: ./output/]",
     )
     return parser.parse_args()
+
+
+def parse_args_SV() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Signature Verification")
+    parser.add_argument(
+        "--base",
+        type=Path,
+        default="SignatureVerification",
+        help=(
+            "Path to the base fold from the MCYT Signatures base"
+            "[Default: ./SignatureVerification-test]"
+        ),
+    )
+    parser.add_argument(
+        "--bese-test",
+        type=Path,
+        default="SignatureVerification-test",
+        help=(
+            "Path to the base fold from the MCYT Signatures base test"
+            "[Default: ./SignatureVerification-test]"
+        ),
+    )
+    parser.add_argument(
+        "--top_k",
+        type=int,
+        default=20,
+        help=(
+            "Top k distance as genuine signature"
+            "[Default: 20]"
+        ),
+    )
+    parser.add_argument(
+        "-o",
+        "--out-dir",
+        dest="out_path",
+        type=Path,
+        default="output/report_task3.md",
+        help="Path to the direcotry where all outputs are saved [Default: ./output/]",
+    )
+    return parser.parse_args()
+
+     

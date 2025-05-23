@@ -4,6 +4,17 @@ import pandas as pd
 from sklearn.metrics import roc_curve
 from tqdm import tqdm
 
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from common import param_utils
+from utils import report_util
+
+def load_gt(file_path):
+    df = pd.read_csv(file_path, sep='\t', header=None, 
+                       names= ['signature_id','label'])
+    df['is_genuine'] = df['label'].str.lower() == 'genuine'
+    return df
+
 def dtw(s1, s2, distance_func=None):
     if distance_func is None:
         distance_func = lambda x, y: np.sqrt(np.sum((x - y) ** 2))
@@ -79,8 +90,62 @@ def generate_test_predictions(results_df):
     print(f"Predictions saved to results/test.tsv")
     return output_lines
 
+def get_top_k_matches(results_df, k= 20):
+    matches = []
+
+    for writer_id, group in results_df.groupby('writer_id'):
+        group = group.drop_duplicates(subset=['verification_signature_id'], keep='first')
+        sorted_sigs = group.sort_values('distance').head(k)
+        
+        for _, row in sorted_sigs.iterrows():
+            matches.append({
+                'writer_id': f"{writer_id:03d}",
+                'verification_signature_id': row['verification_signature_id'],
+                'distance': row['distance']
+            })
+
+    return pd.DataFrame(matches) 
+
+
+def prepare_matches_for_map(matches_df, gt_df) :
+    matches_df = matches_df.merge(
+    gt_df[['signature_id', 'is_genuine']],
+    left_on='verification_signature_id',
+    right_on='signature_id',
+    how='left').drop(columns='signature_id')
+
+    return matches_df
+
+def average_precision(ranked_is_genuine):
+    hits = 0
+    sum_precisions = 0
+    for i, relevant in enumerate(ranked_is_genuine, start=1):
+        if relevant:
+            hits += 1
+            sum_precisions += hits / i
+    return sum_precisions / hits if hits > 0 else 0.0
+
+
+def compute_map(matches_df):
+    writer_ap = {}
+    ap_list = []
+
+    for writer_id, group in matches_df.groupby('writer_id'):
+        ranked_truth = group['is_genuine'].tolist()
+        ap = average_precision(ranked_truth)
+        ap_list.append(ap)
+        writer_id = int(writer_id)
+        writer_ap[writer_id] = ap
+
+    map_k = np.mean(ap_list)
+    return writer_ap, map_k
+
+
 def main():
-    base_dir = './SignatureVerification-test'
+
+    args = param_utils.parse_args_SV()
+    base_dir = args.base
+
     enrollment_dir = os.path.join(base_dir, 'enrollment')
     verification_dir = os.path.join(base_dir, 'verification')
     
@@ -94,17 +159,17 @@ def main():
     
     verification_files = os.listdir(verification_dir) if os.path.exists(verification_dir) else []
     
-    if not verification_files:
-        try:
-            test_df = pd.read_csv(os.path.join(base_dir, 'test.tsv'), sep='\t', header=None)
-            verification_files = []
-            for _, row in test_df.iterrows():
-                writer_id = row[0]
-                for i in range(1, len(row), 2):
-                    if i < len(row):
-                        verification_files.append(f"{row[i]}.tsv")
-        except:
-            print("Error reading test.tsv. No verification files will be processed.")
+    # if not verification_files:
+    #     try:
+    #         test_df = pd.read_csv(os.path.join(base_dir, 'test.tsv'), sep='\t', header=None)
+    #         verification_files = []
+    #         for _, row in test_df.iterrows():
+    #             writer_id = row[0]
+    #             for i in range(1, len(row), 2):
+    #                 if i < len(row):
+    #                     verification_files.append(f"{row[i]}.tsv")
+    #     except:
+    #         print("Error reading test.tsv. No verification files will be processed.")
 
     for writer_id in tqdm(writers_df['writer_id']):
         writer_id = int(writer_id)
@@ -124,20 +189,33 @@ def main():
             if not os.path.exists(sig_path):
                 continue
                 
-            signature_id = sig_file.split('.')[0]
+            verification_signature_id = sig_file.split('.')[0]
             test_sig = load_signature(sig_path)
             distance = verify_signature(test_sig, reference_sigs)
             
             results.append({
                 'writer_id': writer_id,
-                'signature_id': signature_id,
+                'verification_signature_id': verification_signature_id,
                 'distance': distance,
-                'is_genuine': None,
-                'verified_as_genuine': False
+                #'is_genuine': None,
+                #'verified_as_genuine': False
             })
-    
+
     results_df = pd.DataFrame(results)
-    predictions = generate_test_predictions(results_df)
+
+    gt_df = load_gt(os.path.join(base_dir, 'gt.tsv'))
+
+    top_k_df = get_top_k_matches(results_df, k= args.top_k)
+
+    map_ready_df = prepare_matches_for_map(top_k_df, gt_df)
+
+    writer_ap, map_k = compute_map(map_ready_df)
+
+    print(f"MAP@20: {map_k:.4f}")
+
+    report_util.save_report_as_markdown(writer_ap,map_k,args.out_path, args.top_k)
+
+   # predictions = generate_test_predictions(results_df)
     
     print(f"\nProcessed {len(results)} signatures")
     
