@@ -94,7 +94,7 @@ def parse_args_SV() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
-        "--bese-test",
+        "--bese_test",
         type=Path,
         default="SignatureVerification-test",
         help=(
@@ -117,7 +117,14 @@ def parse_args_SV() -> argparse.Namespace:
         dest="out_path",
         type=Path,
         default="output/report_task3.md",
-        help="Path to the direcotry where all outputs are saved [Default: ./output/]",
+        help="Path to the direcotry where all outputs are saved [Default: ./output/report_task3.md]",
+    )
+    parser.add_argument(
+        "--out-test",
+        dest="out_test_path",
+        type=Path,
+        default="taskThree/test.tsv",
+        help="Path to the direcotry where all outputs are saved [Default: ./taskThree/test.tsv]",
     )
     return parser.parse_args()
 

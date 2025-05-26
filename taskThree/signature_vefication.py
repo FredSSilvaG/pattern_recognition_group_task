@@ -69,7 +69,7 @@ def verify_signature(test_sig, reference_sigs, threshold=None):
     
     return avg_distance, avg_distance <= threshold
 
-def generate_test_predictions(results_df):
+def generate_test_predictions(results_df,out_test_path):
     os.makedirs('results', exist_ok=True)
     output_lines = []
     
@@ -79,15 +79,15 @@ def generate_test_predictions(results_df):
         line = [f"{writer_id:03d}"]
         
         for _, row in sorted_sigs.iterrows():
-            line.append(row['signature_id'])
+            line.append(row['signature_id'].split("-")[1])
             line.append(f"{row['distance']:.6f}")
         
         output_lines.append('\t'.join(line))
     
-    with open('results/test.tsv', 'w') as f:
+    with open(out_test_path, 'w') as f:
         f.write('\n'.join(output_lines))
     
-    print(f"Predictions saved to results/test.tsv")
+    print(f"Predictions saved to {out_test_path}")
     return output_lines
 
 def get_top_k_matches(results_df, k= 20):
@@ -144,7 +144,7 @@ def compute_map(matches_df):
 def main():
 
     args = param_utils.parse_args_SV()
-    base_dir = args.base
+    base_dir = args.bese_test
 
     enrollment_dir = os.path.join(base_dir, 'enrollment')
     verification_dir = os.path.join(base_dir, 'verification')
@@ -158,18 +158,20 @@ def main():
     print("Processing verification signatures...")
     
     verification_files = os.listdir(verification_dir) if os.path.exists(verification_dir) else []
+
+    print(verification_files)
     
-    # if not verification_files:
-    #     try:
-    #         test_df = pd.read_csv(os.path.join(base_dir, 'test.tsv'), sep='\t', header=None)
-    #         verification_files = []
-    #         for _, row in test_df.iterrows():
-    #             writer_id = row[0]
-    #             for i in range(1, len(row), 2):
-    #                 if i < len(row):
-    #                     verification_files.append(f"{row[i]}.tsv")
-    #     except:
-    #         print("Error reading test.tsv. No verification files will be processed.")
+    if not verification_files:
+        try:
+            test_df = pd.read_csv(os.path.join(base_dir, 'test.tsv'), sep='\t', header=None)
+            verification_files = []
+            for _, row in test_df.iterrows():
+                writer_id = row[0]
+                for i in range(1, len(row), 2):
+                    if i < len(row):
+                        verification_files.append(f"{row[i]}.tsv")
+        except:
+            print("Error reading test.tsv. No verification files will be processed.")
 
     for writer_id in tqdm(writers_df['writer_id']):
         writer_id = int(writer_id)
@@ -189,13 +191,13 @@ def main():
             if not os.path.exists(sig_path):
                 continue
                 
-            verification_signature_id = sig_file.split('.')[0]
+            signature_id = sig_file.split('.')[0]
             test_sig = load_signature(sig_path)
             distance = verify_signature(test_sig, reference_sigs)
             
             results.append({
                 'writer_id': writer_id,
-                'verification_signature_id': verification_signature_id,
+                'signature_id': signature_id,
                 'distance': distance,
                 #'is_genuine': None,
                 #'verified_as_genuine': False
@@ -203,19 +205,19 @@ def main():
 
     results_df = pd.DataFrame(results)
 
-    gt_df = load_gt(os.path.join(base_dir, 'gt.tsv'))
+    # gt_df = load_gt(os.path.join(base_dir, 'gt.tsv'))
 
-    top_k_df = get_top_k_matches(results_df, k= args.top_k)
+    # top_k_df = get_top_k_matches(results_df, k= args.top_k)
 
-    map_ready_df = prepare_matches_for_map(top_k_df, gt_df)
+    # map_ready_df = prepare_matches_for_map(top_k_df, gt_df)
 
-    writer_ap, map_k = compute_map(map_ready_df)
+    # writer_ap, map_k = compute_map(map_ready_df)
 
-    print(f"MAP@20: {map_k:.4f}")
+    # print(f"MAP@20: {map_k:.4f}")
 
-    report_util.save_report_as_markdown(writer_ap,map_k,args.out_path, args.top_k)
+    # report_util.save_report_as_markdown(writer_ap,map_k,args.out_path, args.top_k)
 
-   # predictions = generate_test_predictions(results_df)
+    predictions = generate_test_predictions(results_df, args.out_test_path)
     
     print(f"\nProcessed {len(results)} signatures")
     
