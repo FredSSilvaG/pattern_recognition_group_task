@@ -13,7 +13,7 @@ import importlib
 importlib.reload(param_utils)
 
 from utils import decode_utils, image_utils,score_utils
-import dtw
+import taskTwo.unuse.dtw as dtw
 
 
 def read_transcriptions(path):

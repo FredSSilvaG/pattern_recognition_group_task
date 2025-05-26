@@ -116,8 +116,8 @@ def parse_args_SV() -> argparse.Namespace:
         "--out-dir",
         dest="out_path",
         type=Path,
-        default="output/report_task3.md",
-        help="Path to the direcotry where all outputs are saved [Default: ./output/report_task3.md]",
+        default="output/taskThree/report.md",
+        help="Path to the direcotry where all outputs are saved [Default: ./output/taskThree/report.md]",
     )
     parser.add_argument(
         "--out-test",
